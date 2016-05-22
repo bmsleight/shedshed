@@ -156,12 +156,15 @@ module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_sl
     hyp = sqrt(opp*opp+adj*adj);
     theta = atan(opp/adj);
     overhang = (panel_slf_l-hyp)/2;
+    overhang_flat = cos(theta) * overhang;
+    overhang_up = sin(theta) * overhang;
+    
     // Want it to line up with front of timber truct not back
     height_adjust = base_timber * tan(theta);
-    echo("overhang", overhang, opp, hyp, theta, height_adjust);
-    translate([0,0,z_front+base_timber+panel_slf_t+height_adjust])
+    echo("overhang", overhang, opp, hyp, theta, height_adjust, overhang_flat, overhang_up);
+    translate([-overhang_flat,-overhang_flat,z_front+base_timber+panel_slf_t+height_adjust+overhang_up]) rotate([-theta,0,0]) 
     {
-        rotate([-theta,0,0]) cubeI([panel_slf_w,panel_slf_l, panel_slf_t]);
+        shedLowerFloor(x+overhang_flat*2,panel_slf_l);
     }
 }
 
