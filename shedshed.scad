@@ -149,6 +149,21 @@ module frontWallStruts(x,z, space_to_window_w, space_to_window_h, window_w, wind
     translate([space_to_window_w+window_w+space_to_window_w+door_w,0,0]) verticalStruts(x-(space_to_window_w+window_w+space_to_window_w+door_w),door_h, braces = braces);
 }
 
+module roofJoist(y,timber_width=75,timber_length=47)
+{
+    cubeI([timber_width,y,timber_length]);
+}
+
+module roofJoists(x,y,number_x,timber_width=75,timber_length=47)
+{
+    x_inside = x - timber_length*2 - timber_width;
+    x_inside_part = x_inside / number_x; 
+    for(base_x = [0 : number_x])
+       {
+        translate([timber_length+(x_inside_part*base_x),0,-timber_length])  roofJoist(y);
+       }
+}
+
 module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t = base_sheet_t)
 {
     opp = z_front-z_back;
@@ -165,6 +180,7 @@ module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_sl
     translate([-overhang_flat,-overhang_flat,z_front+base_timber+panel_slf_t+height_adjust+overhang_up]) rotate([-theta,0,0]) 
     {
         shedLowerFloor(x+overhang_flat*2,panel_slf_l);
+        translate([overhang,overhang,0]) roofJoists(x,y,6 );
     }
 }
 
