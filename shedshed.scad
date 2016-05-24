@@ -136,6 +136,35 @@ module sideWallStruts(x,z,number_x, braces=1)
 }
 
 
+module prism(l, w, h)
+{
+    polyhedron(
+        points=[[0,0,0], [l,0,0], [l,w,0], [0,w,0], [0,w,h], [l,w,h]],
+        faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
+        );
+}
+
+module caddings(x, z, board_height = 150, board_width_b = 11, board_width_s = 6, overlap = 25, degrees=3)
+{
+    panels = round(-0.5+z/board_height);
+    panel_uplift = board_height - overlap;
+    for(p = [0 : panels-1])
+    {
+        translate([0,0,panel_uplift * p]) 
+         cadding(x, board_height, board_width_b, board_width_s, degrees);
+    }
+}
+
+
+module cadding(x, board_height, board_width_b, board_width_s, degrees)
+{
+    translate([0, -board_width_b, 0]) color("Peru",0.6) rotate([-degrees,0,0])
+    {
+        cube([x, board_width_b - board_width_s, board_height]);
+        translate([0,- board_width_s,0]) prism(x, board_width_s, board_height);
+    }
+}
+
 module frontWallStruts(x,z, space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h, braces)
 {
     echo("frontWallStruts(x,z,space_to_window_w, space_to_window_h, window_w, window_h, door_w, braces)", x,z, space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h, braces);
@@ -185,16 +214,32 @@ module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_sl
 }
 
 
+if($t>0.1) 
+    shedBase(shed_length, shed_width, number_x=5,number_y=1, braces=1);
 
-shedBase(shed_length, shed_width, number_x=5,number_y=1, braces=1);
-translate([0,0,base_timber]) floorMembrane(shed_length, shed_width, thickness = 1);
-translate([0,0,base_timber+1]) shedLowerFloor(shed_length, shed_width);
-translate([0,shed_width-base_timber,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back, 5);
-translate([base_timber,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
-translate([shed_length,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
+if($t>0.2) 
+    translate([0,0,base_timber]) floorMembrane(shed_length, shed_width, thickness = 1);
 
-translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, , door_h=2030, braces=0);
+if($t>0.3) 
+    translate([0,0,base_timber+1]) shedLowerFloor(shed_length, shed_width);
 
-roof(shed_length, shed_width,shed_front_height,shed_front_back);
+
+if($t>0.4) 
+    translate([0,shed_width-base_timber,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back, 5);
+if($t>0.5) 
+    translate([base_timber,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
+
+if($t>0.6) 
+    translate([shed_length,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
+
+if($t>0.7) 
+    translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, , door_h=2030, braces=0);
+
+if($t>0.8) 
+    roof(shed_length, shed_width,shed_front_height,shed_front_back);
 
 //shedBaseSection(shed_length/6,shed_width, braces = 1);
+
+!caddings(2000, 500);
+
+//! cadding(2000);
