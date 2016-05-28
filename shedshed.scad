@@ -1,9 +1,11 @@
 
 shed_length = 5184;
 shed_width = 1829+305/2;
-shed_front_height = 2400;
+shed_front_height = 2350;
 shed_front_back = 2135;
 base_timber = 47;
+timber_construct_w = 38;
+timber_construct_h = 63;
 base_sheet_t = 18;
 
 
@@ -76,6 +78,16 @@ module breatherMembraneSide(x,y, thickness=0.5)
     }    
 }
 
+module breatherMembraneFront(x,y, thickness, space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h)
+{
+    echo ("lll", x,y, thickness, space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h);
+    translate([0,0,0]) rotate([90,0,0]) difference()
+    {
+        floorMembrane(x,y,thickness=thickness,color="Black", overlap=thickness);
+        translate([space_to_window_w,space_to_window_h,-100]) rotate([0,0,0]) cube([window_w,window_h,200]);
+        translate([space_to_window_w*2+window_w,0,-100]) cube([door_w,door_h,200]);
+    }    
+}
 
 //module shedLowerFloor(x,y, panel_slf_w = 607, panel_slf_l =   1829, panel_slf_t =   5.5, panel_min_dimentions = 100)
 module shedLowerFloor(x,y, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t = base_sheet_t, panel_min_dimentions = 100)
@@ -113,12 +125,12 @@ module shedLowerFloor(x,y, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t =
 }
 
 
-module verticalStruts(x,z,timber_width=47,timber_length=47, braces=0, beams=0)
+module verticalStruts(x,z,timber_width=timber_construct_w,timber_length=timber_construct_h, braces=0, beams=0)
 {
 //    echo("shedBaseSection(x,z,timber_width,timber_length, braces",x,z,timber_width,timber_length, braces);
 //    echo("Walls - http://www.wickes.co.uk/Wickes-Sawn-Kiln-Dried-47-x-47-x-2400mm-Pack-6/p/107114");
-    cubeI([x,timber_width,timber_length]);
-    translate([0,0,z-timber_width]) cubeI([x,timber_width,timber_length]);
+    cubeI([x,timber_length,timber_width]);
+    translate([0,0,z-timber_width]) cubeI([x,timber_length,timber_width]);
     translate([0,0,timber_width]) cubeI([timber_width,timber_length,z-timber_width*2]);
     translate([x-timber_width,0,timber_width]) cubeI([timber_width,timber_length,z-timber_width*2]);
     if(braces > 0)
@@ -127,7 +139,7 @@ module verticalStruts(x,z,timber_width=47,timber_length=47, braces=0, beams=0)
         part_z = middle_z/(braces+1);
         for(loop=[1 : braces ])
         {
-                translate([timber_width,0,timber_width/(braces+1) + (loop*part_z)]) cubeI([x-timber_width*2, timber_width,timber_length]);            
+                translate([timber_width,0,timber_width/(braces+1) + (loop*part_z)]) cubeI([x-timber_width*2,timber_length, timber_width]);            
         }
     }
     if(beams> 0)
@@ -136,7 +148,7 @@ module verticalStruts(x,z,timber_width=47,timber_length=47, braces=0, beams=0)
         part_x = middle_x/(beams+1);
         for(loop=[1 : beams ])
         {
-                translate([timber_length/(beams+1) + (loop*part_x),0,timber_width]) cubeI([timber_length, timber_width,z-timber_length*2]);            
+            translate([timber_length/(beams+1) + (loop*part_x),0,timber_width]) cubeI([timber_width,timber_length,z-timber_width*2]);            
         }  
     }
 }
@@ -278,7 +290,7 @@ module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_sl
     translate([-overhang_flat,-overhang_flat,z_front+base_timber+panel_slf_t+height_adjust+overhang_up]) rotate([-theta,0,0]) 
     {
         shedLowerFloor(x+overhang_flat*2,panel_slf_l);
-        translate([overhang,overhang,0]) roofJoists(x,y,6 );
+        translate([overhang,overhang,0]) roofJoists(x,y,7 );
     }
 }
 
@@ -301,53 +313,63 @@ module restOfGarden(offset_x=-381, offset_y=+381 + shed_width)
     }
 
 
+annimate_step = 1/20;
 
-if($t>0.05) 
+
+if($t>annimate_step*1) 
     shedBase(shed_length, shed_width, number_x=5,number_y=1, braces=1);
 
-if($t>0.10) 
+if($t>annimate_step*2) 
     translate([0,0,base_timber]) floorMembrane(shed_length, shed_width, thickness = 1);
 
-if($t>0.15) 
+if($t>annimate_step*3) 
     translate([0,0,base_timber+1]) shedLowerFloor(shed_length, shed_width);
 
 
-if($t>0.20) 
-    translate([0,shed_width-base_timber,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back, 5);
-if($t>0.25) 
-    translate([base_timber,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
+if($t>annimate_step*4) 
+    translate([0,shed_width-timber_construct_h,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back, 5);
+if($t>annimate_step*5) 
+    translate([timber_construct_h,timber_construct_h,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-timber_construct_h*2,shed_front_back,2, braces=1);
 
-if($t>0.30) 
-    translate([shed_length,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
+if($t>annimate_step*6) 
+    translate([shed_length,timber_construct_h,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-timber_construct_h*2,shed_front_back,2, braces=1);
 
-if($t>0.35) 
+if($t>annimate_step*7) 
     translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030, braces=0);
 
-if($t>0.40) 
+if($t>annimate_step*8) 
     roof(shed_length, shed_width,shed_front_height,shed_front_back);
 
-if($t>0.45) 
+if($t>annimate_step*9) 
     translate([0,shed_width+0.5,base_timber])
         breatherMembrane(shed_length, shed_front_back);
 
-if($t>0.50) 
+if($t>annimate_step*10) 
     translate([-0.5,0,base_timber])
         breatherMembraneSide(shed_width, shed_front_height);
 
+if($t>annimate_step*11) 
+    translate([shed_length+3,0,base_timber])
+        breatherMembraneSide(shed_width, shed_front_height);
+
+if($t>annimate_step*12) 
+    translate([-3,0,base_timber])
+        breatherMembraneFront(shed_length,shed_front_height, thickness=0.5,  space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030);
+
 //shedBaseSection(shed_length/6,shed_width, braces = 1);
-if($t>0.65) 
+if($t>annimate_step*13) 
     translate([0,shed_width+3,base_timber])
         claddingBackWall(shed_length, shed_front_back);
 
-if($t>0.70) 
+if($t>annimate_step*14) 
     translate([-3,0,base_timber])
         claddingLeftSideWall(shed_width, shed_front_height);
 
-if($t>0.75) 
+if($t>annimate_step*15) 
     translate([shed_length+3,0,base_timber])
         claddingRightSideWall(shed_width, shed_front_height);
 
-if($t>0.80) 
+if($t>annimate_step*16) 
     translate([-3,0,base_timber])
         claddingFrontWall(shed_length,shed_front_height,  space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030);
 
