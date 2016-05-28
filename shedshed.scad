@@ -51,7 +51,29 @@ module floorMembrane(x,y,thickness,color="Black", overlap=10)
 {
     echo("x,y,thickness=1,color, overlap=1",x,y,thickness,color, overlap);
     echo("http://www.screwfix.com/p/dmp-damp-proof-membrane-black-1000ga-3-x-4m/50464#product_additional_details_container");
-    translate([-overlap,-overlap,0]) color(color, 1) cube([x+overlap*2,y+overlap*2, thickness]);
+    translate([-overlap,-overlap,0]) color(color, 0.5) cube([x+overlap*2,y+overlap*2, thickness]);
+}
+
+module breatherMembrane(x,y, thickness=0.5)
+{
+    // google timber frame breather membrane
+    rotate([90,0,0])  floorMembrane(x,y,thickness=thickness,color="Black", overlap=thickness);
+}
+
+module breatherMembraneSide(x,y, thickness=0.5)
+{
+    // google timber frame breather membrane
+
+    opp = y-shed_front_back;
+    adj = x - base_timber;
+    hyp = sqrt(opp*opp+adj*adj);
+    theta = atan(opp/adj);
+    echo("Degrees: ", theta);
+    translate([0,0,0]) rotate([90,0,90]) difference()
+    {
+        floorMembrane(x,y,thickness=thickness,color="Black", overlap=thickness);
+        translate([0,y,-opp/2]) rotate([0,0,-theta]) cube([x+10,opp,opp]);
+    }    
 }
 
 
@@ -144,17 +166,6 @@ module prism(l, w, h)
         );
 }
 
-module caddings(x, z, board_height = 150, board_width_b = 11, board_width_s = 6, overlap = 25, degrees=3)
-{
-    panels = round(-0.5+z/board_height);
-    panel_uplift = board_height - overlap;
-    for(p = [0 : panels-1])
-    {
-        translate([0,0,panel_uplift * p]) 
-         cadding(x, board_height, board_width_b, board_width_s, degrees);
-    }
-}
-
 
 module cadding(x, board_height, board_width_b, board_width_s, degrees)
 {
@@ -164,6 +175,64 @@ module cadding(x, board_height, board_width_b, board_width_s, degrees)
         translate([0,- board_width_s,0]) prism(x, board_width_s, board_height);
     }
 }
+
+
+module caddings(x, z, board_height = 150, board_width_b = 11, board_width_s = 6, overlap = 25, degrees=3)
+{
+    panel_uplift = board_height - overlap;
+    panels = round(-0.5+z/panel_uplift);
+    for(p = [0 : panels-1])
+    {
+        translate([0,0,panel_uplift * p]) 
+         cadding(x, board_height, board_width_b, board_width_s, degrees);
+    }
+}
+
+
+module claddingBackWall(x,z)
+{
+    translate([x,0,0]) rotate([0,0,180]) caddings(x, z);
+}
+
+module claddingLeftSideWall(x,z)
+{
+    opp = z-shed_front_back;
+    adj = x - base_timber;
+    hyp = sqrt(opp*opp+adj*adj);
+    theta = atan(opp/adj);
+    echo("Degrees: ", theta);
+    translate([0,x,0]) rotate([0,0,270]) difference()
+    {
+        caddings(x, z);
+      translate([0,-opp/2,z-opp]) rotate([0,-theta,0]) cube([x+10,opp,opp]);
+    }
+}
+
+module claddingRightSideWall(x,z)
+{
+    opp = z-shed_front_back;
+    adj = x - base_timber;
+    hyp = sqrt(opp*opp+adj*adj);
+    theta = atan(opp/adj);
+    echo("Degrees: ", theta);
+    translate([0,0,0]) rotate([0,0,90]) difference()
+    {
+        caddings(x, z);
+        translate([0,-opp/2,z]) rotate([0,theta,0]) cube([x+10,opp,opp]);
+    }
+}
+
+module claddingFrontWall(x,z, space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h)
+{
+    translate([0,0,0]) rotate([0,0,0]) difference()
+    {
+        caddings(x, z);
+        translate([space_to_window_w,-100,space_to_window_h]) rotate([0,0,0]) cube([window_w,200,window_h]);
+        translate([space_to_window_w*2+window_w,-100,0]) rotate([0,0,0]) cube([door_w,200,door_h]);
+    }
+}
+
+
 
 module frontWallStruts(x,z, space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h, braces)
 {
@@ -213,33 +282,73 @@ module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_sl
     }
 }
 
+module restOfGarden(offset_x=-381, offset_y=+381 + shed_width)
+{
+    garden_width= 5947.4;
+    garden_length_shed_space = 2440;
+    translate([offset_x, offset_y,0])
+    {
+        color("Green") cube([garden_width, 10, 1830]);
+        translate([0,-garden_length_shed_space-381,0]) color("Green") cube([10, garden_length_shed_space+381, 1830]);
+        translate([garden_width,-garden_length_shed_space,0]) color("Green") cube([10, garden_length_shed_space, 1830]);
+    }
+    translate([-381,-3507.5-2592.5-381,0]) color("Green") cube([10, +3507.5+2592.5+381, 1830]);
+//    translate([garden_width-381,-3507.5-2592.5-381,0]) color("Green") cube([10, +3507.5+2592.5+381, 1830]);
 
-if($t>0.1) 
+    translate([-381+0.1,-3507.5-381,0]) color("red") cube([3202.5, 3507.5, 400]);
+    translate([-381+0.1,-3507.5-2592.5-381,0]) color("red") cube([4727.5,2592.5, 400]);
+
+    }
+
+
+
+if($t>0.05) 
     shedBase(shed_length, shed_width, number_x=5,number_y=1, braces=1);
 
-if($t>0.2) 
+if($t>0.10) 
     translate([0,0,base_timber]) floorMembrane(shed_length, shed_width, thickness = 1);
 
-if($t>0.3) 
+if($t>0.15) 
     translate([0,0,base_timber+1]) shedLowerFloor(shed_length, shed_width);
 
 
-if($t>0.4) 
+if($t>0.20) 
     translate([0,shed_width-base_timber,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back, 5);
-if($t>0.5) 
+if($t>0.25) 
     translate([base_timber,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
 
-if($t>0.6) 
+if($t>0.30) 
     translate([shed_length,base_timber,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-base_timber*2,shed_front_back,2, braces=1);
 
-if($t>0.7) 
-    translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, , door_h=2030, braces=0);
+if($t>0.35) 
+    translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030, braces=0);
 
-if($t>0.8) 
+if($t>0.40) 
     roof(shed_length, shed_width,shed_front_height,shed_front_back);
 
+if($t>0.45) 
+    translate([0,shed_width+0.5,base_timber])
+        breatherMembrane(shed_length, shed_front_back);
+
+if($t>0.50) 
+    translate([-0.5,0,base_timber])
+        breatherMembraneSide(shed_width, shed_front_height);
+
 //shedBaseSection(shed_length/6,shed_width, braces = 1);
+if($t>0.65) 
+    translate([0,shed_width+3,base_timber])
+        claddingBackWall(shed_length, shed_front_back);
 
-!caddings(2000, 500);
+if($t>0.70) 
+    translate([-3,0,base_timber])
+        claddingLeftSideWall(shed_width, shed_front_height);
 
-//! cadding(2000);
+if($t>0.75) 
+    translate([shed_length+3,0,base_timber])
+        claddingRightSideWall(shed_width, shed_front_height);
+
+if($t>0.80) 
+    translate([-3,0,base_timber])
+        claddingFrontWall(shed_length,shed_front_height,  space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030);
+
+//restOfGarden();
