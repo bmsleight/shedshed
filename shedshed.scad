@@ -74,7 +74,7 @@ module breatherMembraneSide(x,y, thickness=0.5)
     translate([0,0,0]) rotate([90,0,90]) difference()
     {
         floorMembrane(x,y,thickness=thickness,color="Black", overlap=thickness);
-        translate([0,y,-opp/2]) rotate([0,0,-theta]) cube([x+10,opp,opp]);
+        translate([0,y,-opp/2]) rotate([0,0,-theta]) cube([x+10,opp*2,opp]);
     }    
 }
 
@@ -89,8 +89,21 @@ module breatherMembraneFront(x,y, thickness, space_to_window_w, space_to_window_
     }    
 }
 
-//module shedLowerFloor(x,y, panel_slf_w = 607, panel_slf_l =   1829, panel_slf_t =   5.5, panel_min_dimentions = 100)
-module shedLowerFloor(x,y, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t = base_sheet_t, panel_min_dimentions = 100)
+
+module sheetFramed(size,center=false, f_timber_width=0, f_timber_length=0, f_offset_w_l=0, f_offset_w_r=0, f_offset_l=0)
+{
+    cubeI(size, center=center);
+    if(f_timber_width>0) // Panel is Not longer than width
+    {
+        translate([f_offset_w_l,f_offset_l,-f_timber_length]) cubeI([size[0]-f_offset_w_l-f_offset_w_r, f_timber_width, f_timber_length]);
+        translate([f_offset_w_l,size[1]-f_timber_width-f_offset_l,-f_timber_length]) cubeI([size[0]-f_offset_w_l-f_offset_w_r, f_timber_width, f_timber_length]);
+        translate([f_offset_w_l,f_offset_l+f_timber_width,-f_timber_length]) cubeI([f_timber_width, size[1]-f_offset_l*2-f_timber_width*2, f_timber_length]);
+      translate([size[0]-f_timber_width-f_offset_w_r,f_offset_l+f_timber_width,-f_timber_length]) cubeI([f_timber_width, size[1]-f_offset_l*2-f_timber_width*2, f_timber_length]);
+        }
+}
+
+
+module shedLowerFloor(x,y, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t = base_sheet_t, panel_min_dimentions = 100, f_timber_width=0,f_timber_length=0, f_offset_l=0)
 {
 //    echo("http://www.wickes.co.uk/Wickes-Non-Structural-Hardwood-Plywood-5-5x607x1829mm/p/111196");
     echo("http://www.wickes.co.uk/Wickes-General-Purpose-OSB3-Board-18x1220x2440mm/p/110517");
@@ -103,24 +116,26 @@ module shedLowerFloor(x,y, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t =
         {
             for(base_x = [0 : x_panels-1])
             {
-                translate([base_x*panel_slf_w,base_y*panel_slf_l,0]) cubeI([panel_slf_w, panel_slf_l,panel_slf_t]);
+                // f_offset_w_l=0, f_offset_w_r=0
+                 f_offset_w_l_ =   base_x==0 ? f_offset_l +timber_construct_w/2+3: 0;
+                translate([base_x*panel_slf_w,base_y*panel_slf_l,0]) sheetFramed([panel_slf_w, panel_slf_l,panel_slf_t], f_timber_width=f_timber_width, f_timber_length=f_timber_length, f_offset_l=f_offset_l, f_offset_w_l=f_offset_w_l_);
                 if(y-(panel_slf_l*y_panels) > panel_min_dimentions)
-                translate([base_x*panel_slf_w,y_panels*panel_slf_l,0]) cubeI([panel_slf_w, y-(panel_slf_l*y_panels),panel_slf_t]);
-                }
+                translate([base_x*panel_slf_w,y_panels*panel_slf_l,0]) sheetFramed([panel_slf_w, y-(panel_slf_l*y_panels),panel_slf_t]);
+            }
             if(x-(panel_slf_w*x_panels) > panel_min_dimentions)
-                translate([(x_panels)*panel_slf_w,(y_panels-1)*panel_slf_l,0]) cubeI([x-(panel_slf_w*x_panels), panel_slf_l,panel_slf_t]); 
+                translate([(x_panels)*panel_slf_w,(y_panels-1)*panel_slf_l,0]) sheetFramed([x-(panel_slf_w*x_panels), panel_slf_l,panel_slf_t], f_timber_width=f_timber_width, f_timber_length=f_timber_length, f_offset_l=f_offset_l, f_offset_w_r=f_offset_l +timber_construct_w/2+3); 
             if(y-(panel_slf_l*y_panels) > panel_min_dimentions)
-                translate([(x_panels)*panel_slf_w,y_panels*panel_slf_l,0]) cubeI([x-(panel_slf_w*x_panels), y-(panel_slf_l*y_panels),panel_slf_t]);
+                translate([(x_panels)*panel_slf_w,y_panels*panel_slf_l,0]) sheetFramed([x-(panel_slf_w*x_panels), y-(panel_slf_l*y_panels),panel_slf_t]);
         }
     }
     else // Panel is longer than width
     {
      for(base_x = [0 : x_panels-1])
      {
-        translate([base_x*panel_slf_w,0,0]) cubeI([panel_slf_w, y,panel_slf_t]);       
+        translate([base_x*panel_slf_w,0,0]) sheetFramed([panel_slf_w, y,panel_slf_t]);       
      }
      if(x-(panel_slf_w*x_panels) > panel_min_dimentions)
-                translate([(x_panels)*panel_slf_w,0,0]) cubeI([x-(panel_slf_w*x_panels), y,panel_slf_t]); 
+                translate([(x_panels)*panel_slf_w,0,0]) sheetFramed([x-(panel_slf_w*x_panels), y,panel_slf_t]); 
     }
 }
 
@@ -128,7 +143,7 @@ module shedLowerFloor(x,y, panel_slf_w = 1220, panel_slf_l = 2440, panel_slf_t =
 module verticalStruts(x,z,timber_width=timber_construct_w,timber_length=timber_construct_h, braces=0, beams=0)
 {
 //    echo("shedBaseSection(x,z,timber_width,timber_length, braces",x,z,timber_width,timber_length, braces);
-//    echo("Walls - http://www.wickes.co.uk/Wickes-Sawn-Kiln-Dried-47-x-47-x-2400mm-Pack-6/p/107114");
+    echo("Struts - http://www.wickes.co.uk/Wickes-Studwork-%28CLS%29-38x63x2400mm-Single/p/107177");
     cubeI([x,timber_length,timber_width]);
     translate([0,0,z-timber_width]) cubeI([x,timber_length,timber_width]);
     translate([0,0,timber_width]) cubeI([timber_width,timber_length,z-timber_width*2]);
@@ -181,6 +196,7 @@ module prism(l, w, h)
 
 module cadding(x, board_height, board_width_b, board_width_s, degrees)
 {
+    echo("Cladding: ", board_height, x); 
     translate([0, -board_width_b, 0]) color("Peru",0.6) rotate([-degrees,0,0])
     {
         cube([x, board_width_b - board_width_s, board_height]);
@@ -191,6 +207,7 @@ module cadding(x, board_height, board_width_b, board_width_s, degrees)
 
 module caddings(x, z, board_height = 150, board_width_b = 11, board_width_s = 6, overlap = 34, degrees=3)
 {
+    echo("Cladding Total:", x, z);
     panel_uplift = board_height - overlap;
     panels = round(-0.5+z/panel_uplift);
     for(p = [0 : panels-1])
@@ -216,7 +233,7 @@ module claddingLeftSideWall(x,z)
     translate([0,x,0]) rotate([0,0,270]) difference()
     {
         caddings(x, z);
-      translate([0,-opp/2,z-opp]) rotate([0,-theta,0]) cube([x+10,opp,opp]);
+      translate([0,-opp/2,z-opp]) rotate([0,-theta,0]) cube([x+10,opp,opp*2]);
     }
 }
 
@@ -230,7 +247,7 @@ module claddingRightSideWall(x,z)
     translate([0,0,0]) rotate([0,0,90]) difference()
     {
         caddings(x, z);
-        translate([0,-opp/2,z]) rotate([0,theta,0]) cube([x+10,opp,opp]);
+        translate([0,-opp/2,z]) rotate([0,theta,0]) cube([x+10,opp,opp*2]);
     }
 }
 
@@ -289,14 +306,14 @@ module roof(x,y,z_front,z_back, panel_slf_w = 1220, panel_slf_l = 2440, panel_sl
     echo("overhang", overhang, opp, hyp, theta, height_adjust, overhang_flat, overhang_up);
     translate([-overhang_flat,-overhang_flat,z_front+base_timber+panel_slf_t+height_adjust+overhang_up]) rotate([-theta,0,0]) 
     {
-        shedLowerFloor(x+overhang_flat*2,panel_slf_l);
-        translate([overhang,overhang,0]) roofJoists(x,y,7 );
+        translate([0,timber_construct_h/2,0]) shedLowerFloor(x+overhang_flat*2,panel_slf_l, f_timber_width=75, f_timber_length=47, f_offset_l=overhang_flat-base_timber/2); 
+//        translate([overhang,overhang,0]) roofJoists(x,y+17.5,7 );
     }
 }
 
-module insulate(space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h, thickness=50, colour="White")
+module insulate(space_to_window_w, space_to_window_h, window_w, window_h, door_w, door_h, thickness=50, colour="White", off=0)
 {
-    translate([0,shed_width-thickness,0]) color(colour,0.5) cube([shed_length, thickness, shed_front_back]);
+    translate([thickness,shed_width-thickness-off,0]) color(colour,0.5) cube([shed_length-thickness*2, thickness, shed_front_back]);
 
     opp = shed_front_height-shed_front_back;
     adj = shed_width - base_timber;
@@ -305,18 +322,18 @@ module insulate(space_to_window_w, space_to_window_h, window_w, window_h, door_w
     echo("Degrees: ", theta);
     translate([0,0,0]) rotate([0,0,90]) difference()
     {
-        translate([0,-thickness,0]) color(colour,0.5) cube([shed_width, thickness, shed_front_back]);        
-        translate([0,-opp/2,shed_front_height]) rotate([0,theta,0]) cube([shed_width+10,opp,opp]);
+        translate([thickness,-thickness-off,0]) color(colour,0.5) cube([shed_width-thickness*2, thickness, shed_front_height]);        
+        translate([0,-opp/2-off,shed_front_height]) rotate([0,theta,0]) cube([shed_width+10,opp,opp*2]);
     }
-    translate([shed_length-thickness,0,0]) rotate([0,0,90]) difference()
+    translate([shed_length-thickness-off,0,0]) rotate([0,0,90]) difference()
     {
-        translate([0,-thickness,0]) color(colour,0.5) cube([shed_width, thickness, shed_front_back]);        
-        translate([0,-opp/2,shed_front_height]) rotate([0,theta,0]) cube([shed_width+10,opp,opp]);
+        translate([thickness,-thickness,0]) color(colour,0.5) cube([shed_width-thickness*2, thickness, shed_front_height]);        
+        translate([0,-opp/2,shed_front_height]) rotate([0,theta,0]) cube([shed_width+10,opp,opp*2]);
     }
 
-    translate([0,0,0]) rotate([0,0,0]) difference()
+    translate([0,off,0]) rotate([0,0,0]) difference()
     {
-    translate([0,0,0]) color(colour,0.5) cube([shed_length, thickness, shed_front_height]);
+    translate([thickness,0,0]) color(colour,0.5) cube([shed_length-thickness*2, thickness, shed_front_height]);
         translate([space_to_window_w,-100,space_to_window_h]) rotate([0,0,0]) cube([window_w,200,window_h]);
         translate([space_to_window_w*2+window_w,-100,0]) rotate([0,0,0]) cube([door_w,200,door_h]);
     }
@@ -347,6 +364,8 @@ module restOfGarden(offset_x=-381, offset_y=+381 + shed_width)
 
 annimate_step = 1/20;
 
+//rotate([6.34182+180,0,0])
+//    {
 
 if($t>annimate_step*1) 
     shedBase(shed_length, shed_width, number_x=5,number_y=1, braces=1);
@@ -359,15 +378,15 @@ if($t>annimate_step*3)
 
 
 if($t>annimate_step*4) 
-    translate([0,shed_width-timber_construct_h,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back, 5);
+    translate([0,shed_width-timber_construct_h,base_timber+1+base_sheet_t])  backWallStruts(shed_length, shed_front_back-base_timber-1, 5);
 if($t>annimate_step*5) 
-    translate([timber_construct_h,timber_construct_h,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-timber_construct_h*2,shed_front_back,2, braces=1);
+    translate([timber_construct_h,timber_construct_h,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-timber_construct_h*2,shed_front_back-base_timber-3,2, braces=1);
 
 if($t>annimate_step*6) 
-    translate([shed_length,timber_construct_h,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-timber_construct_h*2,shed_front_back,2, braces=1);
+    translate([shed_length,timber_construct_h,base_timber+1+base_sheet_t])  sideWallStruts(shed_width-timber_construct_h*2,shed_front_back-base_timber-3,2, braces=1);
 
 if($t>annimate_step*7) 
-    translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030, braces=0);
+    translate([0,0,base_timber+1+base_sheet_t])  frontWallStruts(shed_length,shed_front_height-base_timber-3, space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030, braces=0);
 
 if($t>annimate_step*8) 
     roof(shed_length, shed_width,shed_front_height,shed_front_back);
@@ -405,8 +424,13 @@ if($t>annimate_step*16)
     translate([-3,0,timber_construct_h])
         claddingFrontWall(shed_length,shed_front_height,  space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030);
 
-if($t>annimate_step*16) 
+if($t>annimate_step*17) 
     translate([0,0,timber_construct_h])
         insulate(space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030);
+
+if($t>annimate_step*18) 
+    translate([0,0,timber_construct_h])
+        insulate(space_to_window_w=1830/2, space_to_window_h=2030-610, window_w=1830, window_h=610, door_w=870, door_h=2030, thickness=5, colour="Black", off=timber_construct_h);
+
 
 //restOfGarden();
