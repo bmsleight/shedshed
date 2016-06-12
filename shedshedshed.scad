@@ -90,7 +90,14 @@ module beamsWrap()
         houseWrapLayer(shed_width,shed_front_height+timber_construct_h, overlap=100);
         translate([-opp,shed_front_height-opp,-opp]) rotate([0,0,theta]) cube([shed_width*2,opp*2, opp*2]);
         }
+    difference() 
+        {
+            translate([shed_length,-2,first_layer])  rotate([90,0,180]) houseWrapLayer(shed_length,shed_front_height, overlap=100);
+           translate([space_to_window_w, -50, space_to_window_h+first_layer]) cube([window_w, 100, window_h]);
+           translate([space_to_door_w, -50, first_layer]) cube([door_w, 100, door_h]);
+        }
 
+        
 }
 
 
@@ -287,7 +294,6 @@ module roof()
         translate([sheet_width,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2);
         translate([sheet_width*2,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2);
         translate([sheet_width*3,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2);
-        echo("FlatOffset", flat_offset);
     }
 }
 
@@ -312,6 +318,74 @@ module frameSheet(left_offset=0, right_offset=0, front_offset=0, back_offset=0, 
 }
 
 
+module prism(l, w, h)
+{
+    polyhedron(
+        points=[[0,0,0], [l,0,0], [l,w,0], [0,w,0], [0,w,h], [l,w,h]],
+        faces=[[0,1,2,3],[5,4,3,2],[0,4,5,1],[0,3,4],[5,2,1]]
+        );
+}
+
+
+module cadding(x, board_height, board_width_b, board_width_s, degrees)
+{
+    echo("Cladding: ",  x, board_height); 
+    translate([0, -board_width_b, 0]) color("Peru",0.6) rotate([-degrees,0,0])
+    {
+        cube([x, board_width_b - board_width_s, board_height]);
+        translate([0,- board_width_s,0]) prism(x, board_width_s, board_height);
+    }
+}
+
+
+module caddings(x, z, board_height = 150, board_width_b = 11, board_width_s = 6, overlap = 34, degrees=3)
+{
+    panel_uplift = board_height - overlap;
+    panels = round(-0.5+z/panel_uplift);
+    for(p = [0 : panels-1])
+    {
+        translate([0,0,panel_uplift * p]) 
+         cadding(x, board_height, board_width_b, board_width_s, degrees);
+    }
+}
+
+
+module claddingBackWall()
+{
+    translate([shed_length,shed_width,first_layer]) rotate([0,0,180]) caddings(shed_length, shed_back_height);
+}
+
+module claddingLeftWall()
+{
+    translate([0,shed_width,first_layer]) rotate([0,0,180+90]) 
+    difference()
+    {
+        caddings(shed_width, shed_front_height);
+        translate([-opp,-opp,shed_front_height-opp]) rotate([0,-theta,0]) cube([shed_width*2,opp*2, opp*2]);
+    }
+}
+
+module claddingRightWall()
+{
+    translate([shed_length,0,first_layer]) rotate([0,0,180-90]) 
+    difference()
+    {
+        caddings(shed_width, shed_front_height);
+        translate([-opp,-opp,shed_back_height+opp+base_timber_h]) rotate([0,theta,0]) cube([shed_width*2,opp*2, opp*2]);
+    }
+}
+
+module claddingFrontWall()
+{
+    translate([0,0,first_layer]) rotate([0,0,0]) 
+        difference()
+    {
+        caddings(shed_length, shed_front_height);
+           translate([space_to_window_w, -50, space_to_window_h]) cube([window_w, 100, window_h]);
+           translate([space_to_door_w, -50, 0]) cube([door_w, 100, door_h]);
+    }
+}
+
 
 floorBeams();
 
@@ -326,3 +400,8 @@ frontStructs();
 roof();
 
 beamsWrap();
+
+claddingBackWall();
+claddingLeftWall();
+claddingRightWall();
+claddingFrontWall();
