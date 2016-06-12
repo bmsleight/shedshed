@@ -1,12 +1,13 @@
 shed_length = 5184;
 shed_width = 1981;
-shed_front_height = 2350;
-shed_back_height = 2135;
+shed_front_height = 2250;
+//shed_back_height = 2030;
 
 window_w=1830;
-window_h=610; 
-door_w=870; 
-door_h=2030;
+window_h=920; 
+door_w=858; // 1981 x 838mm + 20
+door_h=1991; // 1981 x 838mm + 20
+shed_back_height = door_h;
 
 space_to_window_w=window_w/2;
 space_to_window_h=door_h-window_h;
@@ -25,6 +26,8 @@ sheet_length = 2440;
 
 wrap_t = 1;
 
+first_layer = base_timber_h+wrap_t+base_sheet_t;
+
 
 opp = shed_front_height-shed_back_height;
 adj = shed_width -timber_construct_h;
@@ -32,6 +35,7 @@ hyp = sqrt(opp*opp+adj*adj);
 theta = atan(opp/adj);
 thin_opp = tan(theta) * timber_construct_h;
 
+echo("Theta ", theta);
 
 module cubeI(size,comment="//", center=false)
 {
@@ -59,7 +63,7 @@ module cubeI(size,comment="//", center=false)
 module houseWrapLayer(width,length, overlap=100)
 {
     echo("House Wrap",width+overlap,length+overlap);
-    color("Black",1)
+    color("Black",0.75)
     {
         cube([width, length, wrap_t]);
         cube([width, wrap_t, overlap]);
@@ -68,6 +72,27 @@ module houseWrapLayer(width,length, overlap=100)
         translate([width-wrap_t,0,0]) cube([wrap_t, length, overlap]);
     }
 }
+
+
+module beamsWrap()
+{
+    
+    translate([0,shed_width,first_layer])  rotate([90,0,0]) houseWrapLayer(shed_length,shed_back_height, overlap=100);
+
+    translate([0,-1,first_layer])  rotate([90,0,90]) difference() 
+        {
+        houseWrapLayer(shed_width,shed_front_height+timber_construct_h, overlap=100);
+        translate([-opp,shed_front_height+timber_construct_h,-opp]) rotate([0,0,-theta]) cube([shed_width*2,opp*2, opp*2]);
+        }
+
+     translate([shed_length,shed_width-1,first_layer])  rotate([90,0,-90]) difference() 
+        {
+        houseWrapLayer(shed_width,shed_front_height+timber_construct_h, overlap=100);
+        translate([-opp,shed_front_height-opp,-opp]) rotate([0,0,theta]) cube([shed_width*2,opp*2, opp*2]);
+        }
+
+}
+
 
 module OSB(size,center=false)
 {
@@ -97,6 +122,7 @@ module floorPanel(width,length)
 
 module floorBeams(width = shed_width, length = shed_length, overlap = 150, cross_beams=5)
 {
+    echo("floorBeams");
     // from one end along the front
     translate([0,0,0]) cubeI([timber_length_unit, base_timber_w, base_timber_h]);
     // from oother end along the front
@@ -128,6 +154,7 @@ module floorBeams(width = shed_width, length = shed_length, overlap = 150, cross
 
 module floorPanels(width = shed_width, length = shed_length)
 {
+    echo("floorPanels");
     sheet_width_inc_wrap = sheet_width + 2*wrap_t;
     num_width_panels = round(-0.5+length/sheet_width_inc_wrap);
     for(base_x = [0 : num_width_panels-1])
@@ -190,11 +217,13 @@ module verticalStruts(width, height, beams=0, extra_struct=0)
 
 module backStructs(width = shed_length, height = shed_back_height, structs_sets=3, beams=2, extra_struct=1)
 {
-    translate([wrap_t,shed_width-timber_construct_h-wrap_t,base_timber_h+wrap_t+base_sheet_t])     
+    echo("backStructs");
+    translate([wrap_t,shed_width-timber_construct_h-wrap_t,first_layer])     
     {
         struct_set_w = (width-wrap_t*2)/structs_sets;
         for(structs=[0:structs_sets-1])
         {
+            echo("backStructs - Section");
             translate([structs*struct_set_w,0,0]) verticalStruts(struct_set_w, height, beams=beams, extra_struct=extra_struct);
         }
     }
@@ -204,7 +233,7 @@ module backStructs(width = shed_length, height = shed_back_height, structs_sets=
 module sideStructs(width = shed_width, height = shed_back_height, beams=2, extra_struct=2)
 {
     echo("SideStructs");
-    translate([timber_construct_h+wrap_t,timber_construct_h,base_timber_h+wrap_t+base_sheet_t])
+    translate([timber_construct_h+wrap_t,timber_construct_h,first_layer])
     {
         rotate([0,0,90]) verticalStruts(width-timber_construct_h*2, height, beams=beams, extra_struct=extra_struct);
     }    
@@ -213,22 +242,25 @@ module sideStructs(width = shed_width, height = shed_back_height, beams=2, extra
 
 module leftSideStructs()
 {
+    echo("leftSideStructs");
     sideStructs();
 }
 
 
 module rightSideStructs()
 {
+    echo("rightSideStructs");
     translate([shed_length-timber_construct_h-wrap_t*2,0,0]) sideStructs();
 }
 
 
 module frontStructs()
 {
-    translate([wrap_t,-wrap_t,base_timber_h+wrap_t+base_sheet_t+1])     
+    echo("frontStructs");
+    translate([wrap_t,-wrap_t,first_layer+1])     
     {
         verticalStruts(space_to_window_w, door_h, beams=2, extra_struct=0);
-        translate([space_to_window_w,0,0]) verticalStruts(window_w, space_to_window_h, beams=1, extra_struct=1);
+        translate([space_to_window_w,0,0]) verticalStruts(window_w, space_to_window_h, beams=1, extra_struct=2);
         translate([space_to_window_w+window_w,0,0])  verticalStruts(space_to_window_w, door_h, beams=2, extra_struct=1);
         translate([space_to_door_w+door_w,0,0])  verticalStruts(shed_length-(space_to_door_w+door_w), door_h, beams=2, extra_struct=0);
         // top part, which is longer than a standard timber_length_unit 
@@ -242,21 +274,43 @@ module frontStructs()
 
 module roof()
 {
+    echo("roof");
     // hyp
     inner_width = hyp+timber_construct_h;
     flat_offset = (sheet_length - inner_width)/2;
 
-    translate([-flat_offset,-wrap_t,shed_front_height+ base_timber_h+wrap_t+base_sheet_t +1 +thin_opp ]) rotate([-theta,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2, left_offset=flat_offset);
+    translate([-flat_offset,-wrap_t,shed_front_height+ first_layer +1 +thin_opp ]) rotate([-theta,0,0]) 
+    {
+        frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2, left_offset=flat_offset);
+        translate([sheet_width*4,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2, right_offset=flat_offset, sw= shed_length - sheet_width*4+flat_offset*2);
+
+        translate([sheet_width,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2);
+        translate([sheet_width*2,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2);
+        translate([sheet_width*3,0,0]) frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2);
+        echo("FlatOffset", flat_offset);
+    }
 }
 
 module frameSheet(left_offset=0, right_offset=0, front_offset=0, back_offset=0, sheet_left_offset=0, sheet_right_offset=0, sheet_front_offset=0, sheet_back_offset=0, sw=sheet_width, sl = sheet_length)
 {
-    translate([left_offset, front_offset, 0]) cubeI([sw-left_offset-right_offset, timber_construct_h, timber_construct_w]);
-    translate([left_offset, sl - back_offset-timber_construct_h, 0]) cubeI([sw-left_offset-right_offset, timber_construct_h, timber_construct_w]);
-    translate([left_offset, front_offset+timber_construct_h, 0]) cubeI([timber_construct_h, sl-front_offset-back_offset-2*timber_construct_h, timber_construct_w]);
-    translate([sw-right_offset-timber_construct_h, front_offset+timber_construct_h, 0]) cubeI([timber_construct_h, sl-front_offset-back_offset-2*timber_construct_h, timber_construct_w]);
-    translate([sheet_left_offset, sheet_front_offset, timber_construct_w]) cubeI([sw-sheet_back_offset,sl-sheet_right_offset, base_sheet_t]);
+    translate([left_offset, front_offset, 0]) cubeI([timber_construct_h, sl-front_offset-back_offset, timber_construct_w]);
+    translate([sw-right_offset-timber_construct_h, front_offset, 0]) cubeI([timber_construct_h, sl-front_offset-back_offset, timber_construct_w]);
+
+   beam_l = (sw-left_offset-right_offset-3*timber_construct_h)/2;
+   
+    translate([left_offset+beam_l+timber_construct_h, front_offset, 0]) cubeI([timber_construct_h, sl-front_offset-back_offset, timber_construct_w]);
+    
+   translate([left_offset+timber_construct_h, front_offset, 0]) cubeI([beam_l, timber_construct_h, timber_construct_w]);
+   translate([left_offset+timber_construct_h+beam_l+timber_construct_h, front_offset, 0]) cubeI([beam_l, timber_construct_h, timber_construct_w]);
+    
+    translate([left_offset+timber_construct_h, sl - back_offset-timber_construct_h, 0]) cubeI([beam_l, timber_construct_h, timber_construct_w]);
+    translate([left_offset+timber_construct_h+beam_l+timber_construct_h, sl - back_offset-timber_construct_h, 0]) cubeI([beam_l, timber_construct_h, timber_construct_w]);
+
+    translate([sheet_left_offset, sheet_front_offset, timber_construct_w]) OSB([sw-sheet_back_offset,sl-sheet_right_offset, base_sheet_t]);
+    mirror([0,0,1]) translate([sheet_left_offset, sheet_front_offset, -timber_construct_w-base_sheet_t-wrap_t]) 
+        houseWrapLayer(sw-sheet_back_offset+2*wrap_t,sl-sheet_right_offset+2*wrap_t, overlap=25);
 }
+
 
 
 floorBeams();
@@ -270,3 +324,5 @@ rightSideStructs();
 
 frontStructs();
 roof();
+
+beamsWrap();
