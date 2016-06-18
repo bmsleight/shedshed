@@ -3,6 +3,8 @@ loose_fitting = 0;
 timber_w = 47;
 timber_h = 75;
 
+sides = 1;
+
 timber_construct_w = timber_w+loose_fitting;
 timber_construct_h = timber_h+loose_fitting;
 
@@ -15,6 +17,9 @@ $fn=60;
 difference()
 {
     cube([timber_construct_w+1*parameter,timber_construct_h+1*parameter,+2*parameter]);
+    if (sides<2)
+    translate([-2*parameter,parameter,parameter]) cube([timber_construct_w+5*parameter,timber_construct_h+2*parameter,+2*parameter]);
+    if (sides>1)
     translate([parameter,parameter,parameter]) cube([timber_construct_w+2*parameter,timber_construct_h+2*parameter,+2*parameter]);
     translate([parameter,parameter,-parameter])
     {

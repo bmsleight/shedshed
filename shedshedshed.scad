@@ -386,22 +386,72 @@ module claddingFrontWall()
     }
 }
 
+module innerInsulation()
+{
+    echo("Insulation");
+    insulation_t = 50;
+    translate([0,0,first_layer]) 
+    {
+    translate([0,shed_width-insulation_t,0]) 
+        cube([shed_length, insulation_t, shed_back_height]);
 
-floorBeams();
+    translate([0,insulation_t,0]) difference()
+        {
+            cube([insulation_t, shed_width-2*insulation_t, shed_front_height]);
+            translate([-insulation_t,0,shed_front_height]) rotate([-theta,0,0]) cube([3*insulation_t,shed_width+2*insulation_t, opp*2]);
+        }
+    translate([shed_length-insulation_t,insulation_t,0]) difference()
+        {
+            cube([insulation_t, shed_width-2*insulation_t, shed_front_height]);
+            translate([-insulation_t,0,shed_front_height]) rotate([-theta,0,0]) cube([3*insulation_t,shed_width+2*insulation_t, opp*2]);
+        }
 
-floorPanels();
+        
+        
+    translate([0,0,0])  difference()
+        {
+            cube([shed_length, insulation_t, shed_front_height]);
+            translate([space_to_window_w, -insulation_t, space_to_window_h]) cube([window_w, 3*insulation_t, window_h]);
+            translate([space_to_door_w, -insulation_t, 0]) cube([door_w, 3*insulation_t, door_h]);
+        }
+        
+    translate([0,insulation_t,shed_front_height+60]) rotate([-theta-90,0,0])  cube([shed_length, insulation_t, hyp]);
 
-backStructs();
+        
+    }
+}
 
-leftSideStructs();
-rightSideStructs();
 
-frontStructs();
-roof();
+annimate_step = 1/20;
 
-beamsWrap();
+if($t>annimate_step*2) 
+    floorBeams();
 
-claddingBackWall();
-claddingLeftWall();
-claddingRightWall();
-claddingFrontWall();
+if($t>annimate_step*3) 
+    floorPanels();
+
+if($t>annimate_step*4) 
+    backStructs();
+if($t>annimate_step*5) 
+    leftSideStructs();
+if($t>annimate_step*6) 
+    rightSideStructs();
+
+if($t>annimate_step*7) 
+    frontStructs();
+if($t>annimate_step*8) 
+    roof();
+if($t>annimate_step*9) 
+    beamsWrap();
+
+if($t>annimate_step*10) 
+    claddingBackWall();
+if($t>annimate_step*11) 
+    claddingLeftWall();
+if($t>annimate_step*12) 
+    claddingRightWall();
+if($t>annimate_step*13) 
+    claddingFrontWall();
+
+if($t>annimate_step*14) 
+    innerInsulation();
