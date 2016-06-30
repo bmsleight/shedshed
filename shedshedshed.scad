@@ -268,8 +268,8 @@ module frontStructs()
     {
         verticalStruts(space_to_window_w, door_h, beams=2, extra_struct=0);
         translate([space_to_window_w,0,0]) verticalStruts(window_w, space_to_window_h, beams=1, extra_struct=2);
-        translate([space_to_window_w+window_w,0,0])  verticalStruts(space_to_window_w, door_h, beams=2, extra_struct=1);
-        translate([space_to_door_w+door_w,0,0])  verticalStruts(shed_length-(space_to_door_w+door_w), door_h, beams=2, extra_struct=0);
+        translate([space_to_window_w+window_w,0,0])  verticalStruts(space_to_window_w, door_h, beams=2, extra_struct=0);
+        translate([space_to_door_w+door_w,0,0])  verticalStruts(shed_length-(space_to_door_w+door_w), door_h, beams=3, extra_struct=1);
         // top part, which is longer than a standard timber_length_unit 
         gap = (space_to_door_w - timber_length_unit)/2;
         remainder = shed_length - timber_length_unit - gap;
