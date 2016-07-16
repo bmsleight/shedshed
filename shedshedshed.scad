@@ -5,8 +5,8 @@ shed_front_height = 2250;
 
 window_w=1830;
 window_h=920; 
-door_w=858; // 1981 x 838mm + 20
-door_h=1991; // 1981 x 838mm + 20
+door_w=816; 
+door_h=1991; // Oops out by 36 (or imber_construct_w)
 shed_back_height = door_h;
 
 space_to_window_w=window_w/2;
@@ -273,11 +273,50 @@ module frontStructs()
         // top part, which is longer than a standard timber_length_unit 
         gap = (space_to_door_w - timber_length_unit)/2;
         remainder = shed_length - timber_length_unit - gap;
-        translate([0,0,door_h])  verticalStruts(gap, shed_front_height-door_h, beams=0, extra_struct=0);
-        translate([gap,0,door_h])  verticalStruts(timber_length_unit, shed_front_height-door_h, beams=0, extra_struct=2);
-        translate([timber_length_unit + gap,0,door_h])  verticalStruts(remainder, shed_front_height-door_h, beams=0, extra_struct=2);
+
+        // FUDGE BECAUSE the door is taller
+        translate([0,0,timber_construct_w])
+        {
+            translate([0,0,door_h-timber_construct_w])  verticalStruts(gap, shed_front_height-door_h+timber_construct_w, beams=0, extra_struct=0);
+            translate([gap,0,door_h])  verticalStruts(timber_length_unit, shed_front_height-door_h, beams=0, extra_struct=2);
+            translate([timber_length_unit + gap,0,door_h])  verticalStruts(remainder, shed_front_height-door_h, beams=0, extra_struct=2);
+
+            // Lower roof beams
+            translate([0,0,door_h-timber_construct_w])
+            {
+                echo("Lower roof beam - across");
+                translate([gap,0,0])  cross_beam();
+                translate([space_to_door_w-timber_construct_h*3,0,0])  cross_beam(); 
+                translate([(space_to_door_w-timber_construct_h*3+gap)/2,0,0])  cross_beam();     
+                translate([space_to_door_w+door_w,0,0])  cross_beam();
+                translate([space_to_door_w+door_w+(shed_length-(space_to_door_w+door_w))/2,0,0])  cross_beam();
+              // Lower roof beams
+                echo("Lower roof beam");
+                translate([0,shed_width-timber_construct_h,0])  beam_fillin(gap);
+                translate([gap+timber_construct_h,0,0])  beam_fillin((space_to_door_w-timber_construct_h*3+gap)/2-gap-timber_construct_h);
+                translate([gap+timber_construct_h,shed_width-timber_construct_h,0])  beam_fillin((space_to_door_w-timber_construct_h*3+gap)/2-gap-timber_construct_h);
+                translate([gap+timber_construct_h+(space_to_door_w-timber_construct_h*3+gap)/2-gap,0,0])  beam_fillin((space_to_door_w-timber_construct_h*3)-(gap+timber_construct_h+(space_to_door_w-timber_construct_h*3+gap)/2-gap));
+                translate([gap+timber_construct_h+(space_to_door_w-timber_construct_h*3+gap)/2-gap,shed_width-timber_construct_h,0])  beam_fillin((space_to_door_w-timber_construct_h*3)-(gap+timber_construct_h+(space_to_door_w-timber_construct_h*3+gap)/2-gap));
+                translate([space_to_door_w+door_w,0,0]) beam_fillin(shed_length-(space_to_door_w+door_w));
+                translate([space_to_door_w+door_w,shed_width-timber_construct_h,0]) beam_fillin(shed_length-(space_to_door_w+door_w));
+                // space_to_door_w+door_w
+                translate([space_to_door_w-timber_construct_h*3+timber_construct_h,shed_width-timber_construct_h,0]) beam_fillin((space_to_door_w+door_w) - (space_to_door_w-timber_construct_h*3+timber_construct_h) );
+
+            }
+        }
     }
 }
+
+module cross_beam()
+{
+    cubeI([timber_construct_h,shed_width, timber_construct_w]);
+}
+
+module beam_fillin(length)
+{
+      cubeI([length,timber_construct_h,timber_construct_w]);
+}
+
 
 module roof()
 {
@@ -285,7 +324,9 @@ module roof()
     // hyp
     inner_width = hyp+timber_construct_h;
     flat_offset = (sheet_length - inner_width)/2;
-
+    
+    // Fudge for door
+    translate([0,0,timber_construct_w]) 
     translate([-flat_offset,-wrap_t,shed_front_height+ first_layer +1 +thin_opp ]) rotate([-theta,0,0]) 
     {
         frameSheet( sheet_front_offset=-flat_offset*1.5, front_offset=0, back_offset=flat_offset*2, left_offset=flat_offset);
